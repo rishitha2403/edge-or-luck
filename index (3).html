@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Edge or Luck?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Research notebook: cool paper, ink, market green for gains, brick red for losses, gold for "the chosen one". Single column, labs stacked like notebook entries. */
+  --bg:#F2F5F3;
+  --surface:#FFFFFF;
+  --ink:#13201C;
+  --muted:#5A6A65;
+  --line:#D6DEDA;
+  --acc:#0B7A5E;
+  --neg:#BF3F2B;
+  --gold:#B07A12;
+  --soft:#E6EEEA;
+  --f-display:"Newsreader", Georgia, "Times New Roman", serif;
+  --f-body:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1412;--surface:#151E1B;--ink:#E4ECE9;--muted:#93A39D;--line:#2A3632;
+    --acc:#3FC79B;--neg:#F0735C;--gold:#E2B44E;--soft:#1C2724;color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1412;--surface:#151E1B;--ink:#E4ECE9;--muted:#93A39D;--line:#2A3632;
+  --acc:#3FC79B;--neg:#F0735C;--gold:#E2B44E;--soft:#1C2724;color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55}
+.wrap{max-width:1040px;margin:0 auto;padding:40px 20px 64px;display:grid;gap:28px}
+header{display:grid;gap:14px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.kicker{font-family:var(--f-mono);font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--f-display);font-weight:600;font-size:clamp(40px,7vw,64px);line-height:1.02;margin:0;text-wrap:balance}
+h1 em{font-style:italic;color:var(--acc)}
+.lede{font-size:18px;max-width:64ch;margin:0}
+.byline{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:14px;color:var(--muted)}
+.byline a{color:var(--ink)}
+.toc{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-top:6px}
+.toc a{display:grid;gap:2px;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:8px;color:var(--ink);text-decoration:none}
+.toc a:hover{border-color:var(--acc)}
+.toc b{font-family:var(--f-mono);font-size:12px;color:var(--acc);font-weight:500}
+.toc span{font-size:14.5px;font-weight:500}
+section.lab{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:26px 24px;display:grid;gap:18px}
+.lab-head{display:grid;gap:6px}
+.lab-no{font-family:var(--f-mono);font-size:12.5px;color:var(--acc);letter-spacing:.05em}
+h2{font-family:var(--f-display);font-weight:600;font-size:clamp(26px,3.6vw,34px);line-height:1.12;margin:0;text-wrap:balance}
+p{margin:0;max-width:66ch}
+.muted{color:var(--muted)}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:16px 24px;align-items:end;padding:16px;background:var(--soft);border-radius:8px}
+.controls > *{min-width:0}
+.ctl{display:grid;gap:6px;min-width:0}
+.ctl.wide{grid-column:span 2}
+@media (max-width:560px){.ctl.wide{grid-column:auto}}
+.controls select{width:100%;max-width:100%;min-width:0;text-overflow:ellipsis}
+.controls button,.controls .filebtn{justify-self:start;white-space:nowrap}
+.ctl label{font-size:13px;color:var(--muted);display:flex;justify-content:space-between;gap:8px}
+.ctl label output{font-family:var(--f-mono);color:var(--ink);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--acc)}
+select,button,.filebtn{font:inherit;font-size:14px;padding:8px 12px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+button.primary,.filebtn{background:var(--acc);border-color:var(--acc);color:var(--surface);font-weight:500}
+button:focus-visible,select:focus-visible,input:focus-visible,.toc a:focus-visible,.filebtn:focus-within{outline:2px solid var(--gold);outline-offset:2px}
+.filebtn{position:relative;display:inline-flex;align-items:center;justify-content:center}
+.filebtn input{position:absolute;opacity:0;width:1px;height:1px;overflow:hidden;pointer-events:none}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.tile{border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:grid;gap:2px}
+.tile .v{font-family:var(--f-mono);font-size:24px;font-weight:500;font-variant-numeric:tabular-nums;line-height:1.2}
+.tile .k{font-size:13px;color:var(--muted)}
+.tile.good{border-left:4px solid var(--acc)}
+.tile.bad{border-left:4px solid var(--neg)}
+.tile.gold{border-left:4px solid var(--gold)}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr));gap:18px}
+figure{margin:0;display:grid;gap:6px;min-width:0}
+figcaption{font-size:13.5px;color:var(--muted)}
+figcaption b{color:var(--ink);font-weight:600}
+.chart{width:100%;min-height:200px}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--muted)}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.takeaway{border-left:3px solid var(--acc);padding:4px 0 4px 14px;font-size:15.5px;max-width:70ch}
+.takeaway b{font-weight:600}
+.pill{display:inline-block;font-family:var(--f-mono);font-size:12.5px;padding:3px 10px;border-radius:999px;font-weight:500}
+.pill.good{background:color-mix(in srgb,var(--acc) 16%,transparent);color:var(--acc)}
+.pill.bad{background:color-mix(in srgb,var(--neg) 16%,transparent);color:var(--neg)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+.tablewrap{overflow-x:auto}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+thead th{font-size:12.5px;color:var(--muted);font-weight:500}
+td{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+td:first-child{font-family:var(--f-body)}
+.datainfo{font-size:13.5px;color:var(--muted)}
+.datainfo.err{color:var(--neg)}
+.check{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:10px}
+.check div{border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:grid;gap:4px}
+.check b{font-size:15px}
+.check span{font-size:14px;color:var(--muted)}
+.check .tag{font-family:var(--f-mono);font-size:11.5px;color:var(--acc)}
+footer{font-size:13.5px;color:var(--muted);display:grid;gap:6px;border-top:1px solid var(--line);padding-top:18px}
+code{font-family:var(--f-mono);font-size:.92em}
+@media (max-width:520px){section.lab{padding:20px 16px}.tile .v{font-size:21px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">A research notebook · Quantitative finance</div>
+  <h1>Edge or <em>luck?</em></h1>
+  <p class="lede">Most backtests look brilliant and fail live. This notebook is four small experiments I built to answer one question before trusting any trading strategy: is this a real edge, or did the data just get lucky? Every chart below is computed live in your browser. Move the sliders and watch good-looking strategies fall apart.</p>
+  <div class="byline">
+    <span><b style="color:var(--ink)">Ch Rishitha</b> · Mathematics &amp; Scientific Computing, IIT Kanpur</span>
+    <span>Junior Quantitative Research Analyst application · House of EdTech</span>
+    <a href="https://github.com/rishitha2403">github.com/rishitha2403</a>
+  </div>
+  <nav class="toc" aria-label="Experiments">
+    <a href="#luck"><b>01 · Data snooping</b><span>Try 1,000 strategies with zero edge</span></a>
+    <a href="#costs"><b>02 · Costs</b><span>Where a good Sharpe goes to die</span></a>
+    <a href="#lln"><b>03 · Sample size</b><span>How long until you can trust it?</span></a>
+    <a href="#backtest"><b>04 · Out-of-sample</b><span>Backtest on real NSE data</span></a>
+  </nav>
+</header>
+
+<!-- LAB 1 -->
+<section class="lab" id="luck">
+  <div class="lab-head">
+    <div class="lab-no">Experiment 01 · Overfitting and data snooping</div>
+    <h2>Test enough random strategies and one will look like genius</h2>
+    <p>The market here is a pure random walk with Nifty-like daily volatility. Every strategy flips randomly between long and short, so none has any real edge. We pick the one with the best in-sample Sharpe ratio and then watch what it does on data it has never seen.</p>
+  </div>
+  <div class="controls">
+    <div class="ctl"><label for="l1n">Strategies tried <output id="l1n-o">500</output></label><input type="range" id="l1n" min="1" max="1000" step="1" value="500"></div>
+    <div class="ctl"><label for="l1y">Years in-sample (and out-of-sample) <output id="l1y-o">3</output></label><input type="range" id="l1y" min="1" max="10" step="1" value="3"></div>
+    <button class="primary" id="l1r" type="button">Re-run with new random data</button>
+  </div>
+  <div class="tiles">
+    <div class="tile gold"><span class="k">Best in-sample Sharpe</span><span class="v" id="l1-best">–</span></div>
+    <div class="tile bad"><span class="k">Same strategy, out-of-sample</span><span class="v" id="l1-oos">–</span></div>
+    <div class="tile"><span class="k">Top 10 strategies, avg out-of-sample Sharpe</span><span class="v" id="l1-top">–</span></div>
+    <div class="tile"><span class="k">Best Sharpe expected from luck alone ≈ √(2 ln N) / √years</span><span class="v" id="l1-exp">–</span></div>
+  </div>
+  <div class="charts">
+    <figure>
+      <figcaption><b>The "winner" before and after the split.</b> Cumulative return of the best in-sample strategy.</figcaption>
+      <div class="legend"><span><i style="background:var(--gold)"></i>In-sample (selected on this)</span><span><i style="background:var(--muted)"></i>Out-of-sample (never seen)</span></div>
+      <div class="chart" id="l1-eq"></div>
+    </figure>
+    <figure>
+      <figcaption><b>Every strategy's in-sample Sharpe.</b> All of them have true Sharpe 0. The spread is pure noise.</figcaption>
+      <div class="legend"><span><i style="background:var(--muted)"></i>Strategies</span><span><i style="background:var(--gold)"></i>The one we'd pick</span></div>
+      <div class="chart" id="l1-hist"></div>
+    </figure>
+  </div>
+  <p class="takeaway"><b>Takeaway:</b> the best backtest out of many is biased upward by an amount we can calculate. A real research process tracks how many ideas were tried and demands an out-of-sample hurdle that grows with that number.</p>
+</section>
+
+<!-- LAB 2 -->
+<section class="lab" id="costs">
+  <div class="lab-head">
+    <div class="lab-no">Experiment 02 · Transaction costs</div>
+    <h2>A strategy that trades too often pays its edge to the exchange</h2>
+    <p>Each round trip costs brokerage, taxes such as STT, exchange fees and slippage. Small per trade, huge per year. Set the strategy's gross quality and how often it trades, and see how much Sharpe survives.</p>
+  </div>
+  <div class="controls">
+    <div class="ctl"><label for="l2s">Gross Sharpe before costs <output id="l2s-o">1.5</output></label><input type="range" id="l2s" min="0.2" max="3" step="0.1" value="1.5"></div>
+    <div class="ctl"><label for="l2t">Round trips per year <output id="l2t-o">100</output></label><input type="range" id="l2t" min="4" max="500" step="2" value="100"></div>
+    <div class="ctl"><label for="l2c">All-in cost per round trip, bps <output id="l2c-o">15</output></label><input type="range" id="l2c" min="0" max="60" step="1" value="15"></div>
+  </div>
+  <div class="tiles">
+    <div class="tile"><span class="k">Gross annual return (at 18% volatility)</span><span class="v" id="l2-g">–</span></div>
+    <div class="tile bad"><span class="k">Annual cost drag</span><span class="v" id="l2-d">–</span></div>
+    <div class="tile" id="l2-nt"><span class="k">Net Sharpe after costs</span><span class="v" id="l2-n">–</span></div>
+    <div class="tile gold"><span class="k">Break-even cost per round trip</span><span class="v" id="l2-b">–</span></div>
+  </div>
+  <figure>
+    <figcaption><b>Net Sharpe as costs rise,</b> for the turnover you chose and two reference speeds.</figcaption>
+    <div class="legend"><span><i style="background:var(--acc)"></i>Your strategy</span><span><i style="background:var(--muted)"></i>12 trades/yr (monthly)</span><span><i style="background:var(--neg)"></i>500 trades/yr (intraday-ish)</span></div>
+    <div class="chart" id="l2-ch"></div>
+  </figure>
+  <p class="takeaway"><b>Takeaway:</b> the question is never just "is the signal real?" but "is it bigger than the cost of trading it?" Break-even cost is the first number I check.</p>
+</section>
+
+<!-- LAB 3 -->
+<section class="lab" id="lln">
+  <div class="lab-head">
+    <div class="lab-no">Experiment 03 · The Law of Large Numbers</div>
+    <h2>How many years of data before a Sharpe ratio means anything?</h2>
+    <p>My undergraduate project studies the Law of Large Numbers: when a sample average converges, how fast, and what changes with heavy tails and dependence. A Sharpe ratio is just a sample average divided by a sample standard deviation, so it obeys the same rules. Below are 30 strategies with the <em>same</em> true Sharpe. Watch how far apart their measured Sharpe ratios stay.</p>
+  </div>
+  <div class="controls">
+    <div class="ctl"><label for="l3s">True annual Sharpe <output id="l3s-o">0.8</output></label><input type="range" id="l3s" min="0" max="2" step="0.1" value="0.8"></div>
+    <div class="ctl"><label for="l3d">Tail heaviness (Student-t degrees of freedom) <output id="l3d-o">5</output></label><input type="range" id="l3d" min="5" max="60" step="1" value="5"></div>
+    <button class="primary" id="l3r" type="button">Draw new paths</button>
+  </div>
+  <div class="tiles">
+    <div class="tile gold"><span class="k">Years until the 95% band excludes zero</span><span class="v" id="l3-y">–</span></div>
+    <div class="tile"><span class="k">95% band after 1 year</span><span class="v" id="l3-1">–</span></div>
+    <div class="tile"><span class="k">95% band after 5 years</span><span class="v" id="l3-5">–</span></div>
+    <div class="tile bad"><span class="k">Paths showing a negative Sharpe at year 2</span><span class="v" id="l3-neg">–</span></div>
+  </div>
+  <figure>
+    <figcaption><b>Measured Sharpe ratio over time</b> for 30 strategies sharing one true Sharpe, with the theoretical 95% band.</figcaption>
+    <div class="legend"><span><i style="background:var(--acc)"></i>Simulated paths</span><span><i style="background:var(--gold)"></i>True Sharpe</span><span><i style="background:color-mix(in srgb,var(--gold) 30%,transparent)"></i>95% band (Mertens / Lo standard error)</span></div>
+    <div class="chart" id="l3-ch"></div>
+  </figure>
+  <p class="takeaway"><b>Takeaway:</b> the standard error of an annual Sharpe is roughly 1/√years. A 3-year backtest with Sharpe 0.8 cannot be told apart from zero. Heavy tails make the paths jumpier, and real market returns also have volatility clustering, which slows convergence further.</p>
+</section>
+
+<!-- LAB 4 -->
+<section class="lab" id="backtest">
+  <div class="lab-head">
+    <div class="lab-no">Experiment 04 · Walk it forward</div>
+    <h2>Optimise on the past, then face the future</h2>
+    <p>A long/flat backtest with the guard-rails the earlier experiments call for. Signals use only the closing price up to day <i>t</i> and are traded from day <i>t+1</i>, so there is no look-ahead. Costs are charged on every position change. The lookback is tuned on the training period only, then judged on the test period.</p>
+    <p><b>Momentum</b> holds the index while its price is above its moving average. <b>Mean reversion</b> buys when the price falls more than one standard deviation below its moving average (z &lt; −1) and sells once it recovers to the average (z &gt; 0).</p>
+    <p class="muted">It opens on a synthetic demo series. Load a real CSV with Date and Close columns (for example NIFTY 50 history from niftyindices.com or Yahoo Finance, or any NSE stock) to run it on real prices.</p>
+  </div>
+  <div class="controls">
+    <div class="ctl wide"><label for="l4k">Strategy</label>
+      <select id="l4k"><option value="mom">Momentum (trend following)</option><option value="mr">Mean reversion (z-score)</option></select></div>
+    <div class="ctl"><label for="l4f">Training share <output id="l4f-o">60%</output></label><input type="range" id="l4f" min="40" max="80" step="5" value="60"></div>
+    <div class="ctl"><label for="l4c">Cost per side, bps <output id="l4c-o">10</output></label><input type="range" id="l4c" min="0" max="40" step="1" value="10"></div>
+    <label class="filebtn" for="l4file">Load price CSV<input type="file" id="l4file" accept=".csv,text/csv"></label>
+  </div>
+  <div class="datainfo" id="l4-info">Synthetic demo series (not real market data).</div>
+  <div class="tiles">
+    <div class="tile gold"><span class="k">Lookback chosen on training data</span><span class="v" id="l4-L">–</span></div>
+    <div class="tile"><span class="k">Training Sharpe</span><span class="v" id="l4-trs">–</span></div>
+    <div class="tile" id="l4-tst"><span class="k">Test Sharpe</span><span class="v" id="l4-tss">–</span></div>
+    <div class="tile"><span class="k">Verdict</span><span class="v" id="l4-ver" style="font-size:16px;padding-top:6px">–</span></div>
+  </div>
+  <div class="charts">
+    <figure>
+      <figcaption><b>Equity curve, growth of ₹1.</b> The dashed line marks where training ends.</figcaption>
+      <div class="legend"><span><i style="background:var(--acc)"></i>Strategy (after costs)</span><span><i style="background:var(--muted)"></i>Buy and hold</span></div>
+      <div class="chart" id="l4-eq"></div>
+    </figure>
+    <figure>
+      <figcaption><b>Parameter sensitivity.</b> Sharpe for every lookback. A real edge shows a broad plateau. A lucky one is a single spike that vanishes in the test period.</figcaption>
+      <div class="legend"><span><i style="background:var(--gold)"></i>Training</span><span><i style="background:var(--acc)"></i>Test</span></div>
+      <div class="chart" id="l4-sens"></div>
+    </figure>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Metric</th><th>Strategy · train</th><th>Strategy · test</th><th>Buy &amp; hold · test</th></tr></thead>
+      <tbody id="l4-tbl"></tbody>
+    </table>
+  </div>
+  <p class="datainfo" id="l4-stress"></p>
+</section>
+
+<!-- CHECKLIST -->
+<section class="lab" id="checklist">
+  <div class="lab-head">
+    <div class="lab-no">Before I believe a backtest</div>
+    <h2>My checklist</h2>
+  </div>
+  <div class="check">
+    <div><span class="tag">Experiment 01</span><b>How many ideas did I try?</b><span>Raise the bar with the number of trials. Report the count, not just the winner.</span></div>
+    <div><span class="tag">Experiment 02</span><b>Does it survive realistic costs?</b><span>Brokerage, STT, exchange fees, slippage and impact. Know the break-even cost.</span></div>
+    <div><span class="tag">Experiment 03</span><b>Is the sample long enough?</b><span>Sharpe standard error ≈ 1/√years. Fat tails and volatility clustering need even more.</span></div>
+    <div><span class="tag">Experiment 04</span><b>Did it hold out-of-sample?</b><span>Tune on train, judge on untouched test data, ideally walk-forward across regimes.</span></div>
+    <div><span class="tag">Experiment 04</span><b>Is there a plateau, not a spike?</b><span>Neighbouring parameters should work too. Sensitivity analysis catches curve fitting.</span></div>
+    <div><span class="tag">Built in</span><b>No look-ahead</b><span>Signals at close t, trades at t+1. No future data in indicators, normalisation or universe.</span></div>
+    <div><span class="tag">Data</span><b>No survivorship bias</b><span>Use index membership as of each date, including delisted stocks. Today's Nifty 50 list overstates the past.</span></div>
+    <div><span class="tag">Judgement</span><b>Is there a reason it should work?</b><span>A behavioural or structural story (risk premium, flows, liquidity) makes an edge more likely to persist.</span></div>
+  </div>
+</section>
+
+<footer>
+  <span>Built by Ch Rishitha with AI-assisted coding, as a companion to my House of EdTech video resume. All simulations use seeded random numbers and run entirely in your browser. Uploaded files never leave this page.</span>
+  <span>Sharpe ratios are annualised with √252 trading days. Experiment 03's band uses the standard error of the Sharpe ratio for non-normal returns (Lo 2002; Mertens 2002).</span>
+</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+
+function rng(seed){let a=seed>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function gauss(r){let u=0;while(u===0)u=r();const v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+function gammaMT(r,k){const d=k-1/3,c=1/Math.sqrt(9*d);for(;;){const x=gauss(r);let v=1+c*x;if(v<=0)continue;v=v*v*v;const u=r();if(Math.log(u)<0.5*x*x+d-d*v+d*Math.log(v))return d*v;}}
+function sharpe(s,q,n){if(n<2)return 0;const m=s/n;const v=q/n-m*m;return v>0?m/Math.sqrt(v)*Math.sqrt(252):0;}
+const f2=x=>isFinite(x)?x.toFixed(2):"–";
+const pct=(x,d=1)=>isFinite(x)?(x*100).toFixed(d)+"%":"–";
+
+function niceTicks(a,b,n){const span=b-a;if(!(span>0))return[a];let st=Math.pow(10,Math.floor(Math.log10(span/n)));const e=span/n/st;if(e>=7.5)st*=10;else if(e>=3.5)st*=5;else if(e>=1.5)st*=2;const out=[];for(let v=Math.ceil(a/st)*st;v<=b+st*1e-9;v+=st)out.push(Math.abs(v)<st*1e-9?0:+v.toPrecision(12));return out;}
+
+function chart(el,o){
+  const W=Math.max(300,el.clientWidth||600),H=o.h||260;
+  const m={l:50,r:14,t:12,b:30};
+  let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity;
+  const upd=(x,y)=>{if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;};
+  (o.lines||[]).forEach(s=>{for(let i=0;i<s.x.length;i++)upd(s.x[i],s.y[i]);});
+  (o.bands||[]).forEach(b=>{for(let i=0;i<b.x.length;i++){upd(b.x[i],b.lo[i]);upd(b.x[i],b.hi[i]);}});
+  (o.bars||[]).forEach(b=>{upd(b.x0,b.y);upd(b.x1,0);});
+  if(o.zero){if(y0>0)y0=0;if(y1<0)y1=0;}
+  if(o.ymin!==undefined)y0=Math.max(y0,o.ymin);
+  if(o.ymax!==undefined)y1=Math.min(y1,o.ymax);
+  if(o.xmin!==undefined)x0=o.xmin;
+  if(o.xmax!==undefined)x1=o.xmax;
+  if(!(y1>y0)){y1=y0+1;}
+  const py=(y1-y0)*0.06;y0-=o.zero&&y0===0?0:py;y1+=py;
+  const iw=W-m.l-m.r,ih=H-m.t-m.b;
+  const sx=x=>m.l+(x-x0)/(x1-x0||1)*iw;
+  const sy=y=>m.t+(1-(Math.min(Math.max(y,y0),y1)-y0)/(y1-y0))*ih;
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${o.title||"chart"}" style="font-family:var(--f-mono);font-size:11px">`;
+  s+=`<defs><clipPath id="${el.id}-clip"><rect x="${m.l}" y="${m.t}" width="${iw}" height="${ih}"/></clipPath></defs>`;
+  niceTicks(y0,y1,5).forEach(t=>{const y=sy(t);s+=`<line x1="${m.l}" x2="${W-m.r}" y1="${y}" y2="${y}" style="stroke:var(--line);stroke-width:${t===0?1.4:1}"/>`;s+=`<text x="${m.l-8}" y="${y+4}" text-anchor="end" style="fill:var(--muted)">${o.yf?o.yf(t):t}</text>`;});
+  const xt=o.xticks||niceTicks(x0,x1,Math.max(3,Math.floor(iw/90))).map(v=>({v,l:o.xf?o.xf(v):v}));
+  xt.forEach(t=>{if(t.v<x0-1e-9||t.v>x1+1e-9)return;const x=sx(t.v);s+=`<line x1="${x}" x2="${x}" y1="${H-m.b}" y2="${H-m.b+4}" style="stroke:var(--muted)"/><text x="${x}" y="${H-m.b+17}" text-anchor="middle" style="fill:var(--muted)">${t.l}</text>`;});
+  if(o.xlabel)s+=`<text x="${W-m.r}" y="${H-2}" text-anchor="end" style="fill:var(--muted)">${o.xlabel}</text>`;
+  s+=`<g clip-path="url(#${el.id}-clip)">`;
+  (o.bands||[]).forEach(b=>{let d="";for(let i=0;i<b.x.length;i++)d+=(i?"L":"M")+sx(b.x[i]).toFixed(1)+","+sy(b.hi[i]).toFixed(1);for(let i=b.x.length-1;i>=0;i--)d+="L"+sx(b.x[i]).toFixed(1)+","+sy(b.lo[i]).toFixed(1);s+=`<path d="${d}Z" style="fill:${b.color};opacity:${b.op||0.2}"/>`;});
+  (o.bars||[]).forEach(b=>{const xa=sx(b.x0),xb=sx(b.x1),ya=sy(Math.max(b.y,0)),yb=sy(Math.min(b.y,0));s+=`<rect x="${(xa+0.5).toFixed(1)}" y="${ya.toFixed(1)}" width="${Math.max(1,xb-xa-1).toFixed(1)}" height="${Math.max(0.5,yb-ya).toFixed(1)}" rx="1.5" style="fill:${b.color};opacity:${b.op||1}"/>`;});
+  (o.lines||[]).forEach(ln=>{const n=ln.x.length;if(!n)return;const step=Math.max(1,Math.floor(n/900));let d="";for(let i=0;i<n;i+=step)d+=(i?"L":"M")+sx(ln.x[i]).toFixed(1)+","+sy(ln.y[i]).toFixed(1);if((n-1)%step)d+="L"+sx(ln.x[n-1]).toFixed(1)+","+sy(ln.y[n-1]).toFixed(1);s+=`<path d="${d}" style="fill:none;stroke:${ln.color};stroke-width:${ln.w||1.8};opacity:${ln.op||1};stroke-linejoin:round${ln.dash?";stroke-dasharray:"+ln.dash:""}"/>`;});
+  (o.points||[]).forEach(p=>{s+=`<circle cx="${sx(p.x)}" cy="${sy(p.y)}" r="${p.r||4.5}" style="fill:${p.color};stroke:var(--surface);stroke-width:2"/>`;});
+  s+=`</g>`;
+  (o.vlines||[]).forEach(v=>{const x=sx(v.x);s+=`<line x1="${x}" x2="${x}" y1="${m.t}" y2="${H-m.b}" style="stroke:${v.color||"var(--ink)"};stroke-dasharray:4 4;stroke-width:1.2"/>`;if(v.label)s+=`<text x="${x+6}" y="${m.t+12}" style="fill:${v.color||"var(--ink)"}">${v.label}</text>`;});
+  s+=`</svg>`;
+  el.innerHTML=s;
+}
+
+/* ---------- LAB 1 ---------- */
+let seed1=20251117;
+function lab1(){
+  const N=+$("l1n").value,Y=+$("l1y").value;
+  $("l1n-o").textContent=N;$("l1y-o").textContent=Y;
+  const n=252*Y,r=rng(seed1),mkt=new Float64Array(2*n);
+  for(let i=0;i<2*n;i++)mkt[i]=0.0003+0.012*gauss(r);
+  const isS=new Float64Array(N),osS=new Float64Array(N);
+  for(let k=0;k<N;k++){
+    const rr=rng(seed1*31+k*7919+1);let pos=rr()<0.5?1:-1,s1=0,q1=0,s2=0,q2=0;
+    for(let t=0;t<2*n;t++){if(rr()<0.1)pos=-pos;const x=pos*mkt[t];if(t<n){s1+=x;q1+=x*x;}else{s2+=x;q2+=x*x;}}
+    isS[k]=sharpe(s1,q1,n);osS[k]=sharpe(s2,q2,n);
+  }
+  let best=0;for(let k=1;k<N;k++)if(isS[k]>isS[best])best=k;
+  const rr=rng(seed1*31+best*7919+1);let pos=rr()<0.5?1:-1,c=0;
+  const xa=[],ya=[],xb=[],yb=[];
+  for(let t=0;t<2*n;t++){if(rr()<0.1)pos=-pos;c+=pos*mkt[t];const yr=(t+1)/252;if(t<n){xa.push(yr);ya.push(c*100);}else{if(!xb.length){xb.push(xa[xa.length-1]);yb.push(ya[ya.length-1]);}xb.push(yr);yb.push(c*100);}}
+  const idx=[...Array(N).keys()].sort((a,b)=>isS[b]-isS[a]).slice(0,Math.min(10,N));
+  const topAvg=idx.reduce((s,i)=>s+osS[i],0)/idx.length;
+  $("l1-best").textContent=f2(isS[best]);
+  $("l1-oos").textContent=f2(osS[best]);
+  $("l1-top").textContent=f2(topAvg);
+  $("l1-exp").textContent=N>1?f2(Math.sqrt(2*Math.log(N))/Math.sqrt(Y)):"0.00";
+  chart($("l1-eq"),{title:"Cumulative return of best strategy",lines:[{x:xa,y:ya,color:"var(--gold)",w:2},{x:xb,y:yb,color:"var(--muted)",w:2}],vlines:[{x:Y,label:"split"}],zero:true,yf:v=>v+"%",xf:v=>v+"y",xlabel:"years"});
+  let lo=Infinity,hi=-Infinity;for(const v of isS){if(v<lo)lo=v;if(v>hi)hi=v;}
+  if(hi-lo<0.2){lo-=0.1;hi+=0.1;}
+  const B=Math.min(30,Math.max(8,Math.round(Math.sqrt(N)*1.2))),w=(hi-lo)/B,cnt=new Array(B).fill(0);
+  for(const v of isS)cnt[Math.min(B-1,Math.floor((v-lo)/w))]++;
+  const bb=Math.min(B-1,Math.floor((isS[best]-lo)/w));
+  chart($("l1-hist"),{title:"Histogram of in-sample Sharpe",bars:cnt.map((y,i)=>({x0:lo+i*w,x1:lo+(i+1)*w,y,color:i===bb?"var(--gold)":"var(--muted)",op:i===bb?1:0.55})),zero:true,xf:v=>v.toFixed(1),xlabel:"in-sample Sharpe",yf:v=>Number.isInteger(v)?v:""});
+}
+
+/* ---------- LAB 2 ---------- */
+function lab2(){
+  const S=+$("l2s").value,T=+$("l2t").value,C=+$("l2c").value,vol=0.18;
+  $("l2s-o").textContent=S.toFixed(1);$("l2t-o").textContent=T;$("l2c-o").textContent=C;
+  const g=S*vol,drag=T*C/1e4,net=(g-drag)/vol,be=g/T*1e4;
+  $("l2-g").textContent=pct(g);$("l2-d").textContent="−"+pct(drag);$("l2-n").textContent=f2(net);
+  $("l2-nt").className="tile "+(net>0.5?"good":"bad");
+  $("l2-b").textContent=be.toFixed(1)+" bps";
+  const xs=[];for(let c=0;c<=60;c+=0.5)xs.push(c);
+  const line=tt=>xs.map(c=>(g-tt*c/1e4)/vol);
+  chart($("l2-ch"),{title:"Net Sharpe vs cost",lines:[{x:xs,y:line(12),color:"var(--muted)",w:1.6,dash:"5 4"},{x:xs,y:line(500),color:"var(--neg)",w:1.6,dash:"5 4"},{x:xs,y:line(T),color:"var(--acc)",w:2.6}],points:[{x:C,y:net,color:"var(--acc)"}],zero:true,ymin:-3,ymax:Math.max(3.2,S+0.2),xf:v=>v+"",xlabel:"cost per round trip (bps)",yf:v=>v.toFixed(1)});
+}
+
+/* ---------- LAB 3 ---------- */
+let seed3=4242;
+function lab3(){
+  const S=+$("l3s").value,df=+$("l3d").value;
+  $("l3s-o").textContent=S.toFixed(1);$("l3d-o").textContent=df>=60?"60 (≈ normal)":df;
+  const P=30,Y=12,n=252*Y,sig=0.01,mu=S/Math.sqrt(252)*sig,normal=df>=60,sc=normal?1:Math.sqrt((df-2)/df);
+  const r=rng(seed3+df*1000);
+  const lines=[];let neg2=0;
+  for(let p=0;p<P;p++){
+    let s=0,q=0;const xs=[],ys=[];
+    for(let t=1;t<=n;t++){
+      const z=gauss(r);const e=normal?z:z/Math.sqrt(gammaMT(r,df/2)*2/df)*sc;
+      const x=mu+sig*e;s+=x;q+=x*x;
+      if(t>=42&&t%3===0){xs.push(t/252);ys.push(sharpe(s,q,t));}
+      if(t===504&&sharpe(s,q,t)<0)neg2++;
+    }
+    lines.push({x:xs,y:ys,color:"var(--acc)",w:1,op:0.38});
+  }
+  const srd=S/Math.sqrt(252),exk=normal?0:6/(df-4),V=1+srd*srd/2+exk/4*srd*srd;
+  const hw=yrs=>1.96*Math.sqrt(V/(yrs*252))*Math.sqrt(252);
+  const bx=[],lo=[],hi=[];for(let t=42;t<=n;t+=6){const yr=t/252;bx.push(yr);lo.push(S-hw(yr));hi.push(S+hw(yr));}
+  lines.push({x:[0,Y],y:[S,S],color:"var(--gold)",w:2.2});
+  const yrs=S>0?3.8416*V/(S*S):Infinity;
+  $("l3-y").textContent=isFinite(yrs)?(yrs>100?"> 100 yrs":yrs.toFixed(1)+" yrs"):"never";
+  $("l3-1").textContent="± "+f2(hw(1));$("l3-5").textContent="± "+f2(hw(5));
+  $("l3-neg").textContent=neg2+" of "+P;
+  chart($("l3-ch"),{title:"Running Sharpe ratio paths",h:300,bands:[{x:bx,lo,hi,color:"var(--gold)",op:0.16}],lines,zero:true,ymin:-3,ymax:4,xmin:0,xmax:Y,xf:v=>v+"y",xlabel:"years of data",yf:v=>v.toFixed(1)});
+}
+
+/* ---------- LAB 4 ---------- */
+let DATA=null;
+function synthetic(){
+  const r=rng(777),n=2600,p=[],d=[];let x=10000,reg=0;const drifts=[0.0008,-0.0006,0.0001];
+  const start=Date.UTC(2015,0,1);let day=0;
+  for(let i=0;i<n;i++){if(r()<0.008)reg=Math.floor(r()*3);x*=Math.exp(drifts[reg]+0.011*gauss(r));p.push(x);
+    do{day++;}while([0,6].includes(new Date(start+day*864e5).getUTCDay()));d.push(start+day*864e5);}
+  return{p,d,synthetic:true,label:"Synthetic demo series (not real market data). Load a CSV to test real prices."};
+}
+function parseCSV(text){const rows=[];let row=[],f="",q=false;for(let i=0;i<text.length;i++){const ch=text[i];if(q){if(ch==='"'){if(text[i+1]==='"'){f+='"';i++;}else q=false;}else f+=ch;}else{if(ch==='"')q=true;else if(ch===","){row.push(f);f="";}else if(ch==="\n"){row.push(f);rows.push(row);row=[];f="";}else if(ch!=="\r")f+=ch;}}if(f!==""||row.length){row.push(f);rows.push(row);}return rows;}
+function parseDate(s){s=s.trim();const iso=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(iso)return Date.UTC(+iso[1],+iso[2]-1,+iso[3]);const loc=t=>{const x=new Date(t);return Date.UTC(x.getFullYear(),x.getMonth(),x.getDate());};let t=Date.parse(s);if(!isNaN(t))return loc(t);t=Date.parse(s.replace(/-/g," "));if(!isNaN(t))return loc(t);const m=s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);if(m)return Date.UTC(+m[3],+m[2]-1,+m[1]);return NaN;}
+function loadCSV(text,name){
+  const rows=parseCSV(text).filter(r=>r.some(c=>c.trim()!==""));
+  if(rows.length<2)throw new Error("The file has no data rows.");
+  const h=rows[0].map(c=>c.trim().toLowerCase().replace(/\s+/g," "));
+  let ci=h.indexOf("adj close");if(ci<0)ci=h.indexOf("close");if(ci<0)ci=h.findIndex(c=>c.includes("close"));if(ci<0)ci=h.findIndex(c=>c==="price"||c==="ltp"||c.includes("price"));
+  const di=h.findIndex(c=>c.includes("date"));
+  if(ci<0)throw new Error("Couldn't find a Close or Price column. Rename the closing-price column to \"Close\".");
+  let pts=[];
+  for(let i=1;i<rows.length;i++){const v=parseFloat((rows[i][ci]||"").replace(/[,\s₹]/g,""));if(!(v>0))continue;const d=di>=0?parseDate(rows[i][di]||""):NaN;pts.push({v,d});}
+  const dated=pts.filter(p=>!isNaN(p.d)).length>pts.length*0.9;
+  if(dated){pts=pts.filter(p=>!isNaN(p.d)).sort((a,b)=>a.d-b.d);}
+  if(pts.length<300)throw new Error(`Only ${pts.length} usable prices found. Use at least 300 daily closes (about 1.5 years).`);
+  const fmt=t=>new Date(t).toISOString().slice(0,10);
+  return{p:pts.map(x=>x.v),d:dated?pts.map(x=>x.d):null,label:`${name}: ${pts.length} daily closes`+(dated?`, ${fmt(pts[0].d)} to ${fmt(pts[pts.length-1].d)}`:" (no dates found; file order used)")+"."};
+}
+function backtest(p,kind,L,cost){
+  const n=p.length,ret=new Float64Array(n),sig=new Int8Array(n),pos=new Int8Array(n),sr=new Float64Array(n);
+  for(let t=1;t<n;t++)ret[t]=p[t]/p[t-1]-1;
+  let s=0,q=0,inn=0;
+  for(let t=0;t<n;t++){const x=p[t]/p[0];s+=x;q+=x*x;if(t>=L){const y=p[t-L]/p[0];s-=y;q-=y*y;}
+    if(t>=L-1){const m=s/L;if(kind==="mom")sig[t]=x>m?1:0;else{const sd=Math.sqrt(Math.max(q/L-m*m,1e-14));const z=(x-m)/sd;if(!inn&&z<-1)inn=1;else if(inn&&z>0)inn=0;sig[t]=inn;}}}
+  for(let t=1;t<n;t++){pos[t]=sig[t-1];sr[t]=pos[t]*ret[t]-cost*Math.abs(pos[t]-pos[t-1]);}
+  return{ret,pos,sr};
+}
+function metrics(sr,pos,a,b){
+  const n=b-a;let eq=1,peak=1,mdd=0,s=0,q=0,trades=0,exp=0,tr=null;const trs=[];
+  for(let t=a;t<b;t++){const x=sr[t];eq*=1+x;if(eq>peak)peak=eq;mdd=Math.max(mdd,1-eq/peak);s+=x;q+=x*x;exp+=pos[t];
+    if(pos[t]===1){if(t===a||pos[t-1]===0){trades++;tr=1;}tr*=1+x;}else if(t>a&&pos[t-1]===1&&tr!==null){tr*=1+x;trs.push(tr-1);tr=null;}}
+  if(tr!==null)trs.push(tr-1);
+  const w=trs.filter(x=>x>0).reduce((a,b)=>a+b,0),l=-trs.filter(x=>x<0).reduce((a,b)=>a+b,0);
+  return{cagr:Math.pow(eq,252/n)-1,vol:Math.sqrt(Math.max(q/n-(s/n)**2,0))*Math.sqrt(252),sh:sharpe(s,q,n),mdd,trades,pf:l>0?w/l:(w>0?Infinity:NaN),exp:exp/n};
+}
+function lab4(){
+  if(!DATA)DATA=synthetic();
+  const kind=$("l4k").value,frac=+$("l4f").value/100,cps=+$("l4c").value/1e4;
+  $("l4f-o").textContent=Math.round(frac*100)+"%";$("l4c-o").textContent=$("l4c").value;
+  const p=DATA.p,n=p.length;
+  const grid=[5,10,15,20,30,40,50,75,100,150,200].filter(L=>L<n/5);
+  const Lmax=grid[grid.length-1],a=Lmax+1,split=a+Math.floor((n-a)*frac);
+  const res=grid.map(L=>{const bt=backtest(p,kind,L,cps);return{L,bt,tr:metrics(bt.sr,bt.pos,a,split),te:metrics(bt.sr,bt.pos,split,n)};});
+  let best=res[0];res.forEach(r=>{if(r.tr.sh>best.tr.sh)best=r;});
+  const ones=new Int8Array(n).fill(1);
+  const bh=metrics(best.bt.ret,ones,split,n);
+  $("l4-L").textContent=best.L+" days";$("l4-trs").textContent=f2(best.tr.sh);$("l4-tss").textContent=f2(best.te.sh);
+  const held=best.te.sh>0&&best.te.sh>=0.5*best.tr.sh&&best.te.sh>=bh.sh-0.1;
+  $("l4-tst").className="tile "+(best.te.sh>0?"good":"bad");
+  $("l4-ver").innerHTML=held?'<span class="pill good">Held up out-of-sample</span>':(best.te.sh>0?'<span class="pill bad">Weaker out-of-sample</span>':'<span class="pill bad">Failed out-of-sample</span>');
+  const xs=[],ys=[],yb=[];let e=1,eb=1;for(let t=a;t<n;t++){e*=1+best.bt.sr[t];eb*=1+best.bt.ret[t];xs.push(t);ys.push(e);yb.push(eb);}
+  let xt;
+  if(DATA.d){const seen=new Set(),ticks=[];for(let t=a;t<n;t++){const y=new Date(DATA.d[t]).getUTCFullYear();if(!seen.has(y)){seen.add(y);ticks.push({v:t,l:String(y)});}}const k=Math.ceil(ticks.length/7);xt=ticks.filter((_,i)=>i%k===0);if(xt.length&&xt[0].v-a<(n-a)*0.04)xt=xt.slice(1);}
+  chart($("l4-eq"),{title:"Equity curve",lines:[{x:xs,y:yb,color:"var(--muted)",w:1.6},{x:xs,y:ys,color:"var(--acc)",w:2.2}],vlines:[{x:split,label:"test →",color:"var(--gold)"}],xticks:xt,xf:v=>"day "+v,yf:v=>"₹"+(+v.toFixed(2))});
+  const bars=[];res.forEach((r,i)=>{bars.push({x0:i+0.08,x1:i+0.5,y:r.tr.sh,color:"var(--gold)",op:r===best?1:0.55});bars.push({x0:i+0.5,x1:i+0.92,y:r.te.sh,color:"var(--acc)",op:r===best?1:0.55});});
+  chart($("l4-sens"),{title:"Sharpe by lookback",bars,zero:true,xmin:0,xmax:res.length,xticks:res.map((r,i)=>({v:i+0.5,l:r.L})),xlabel:"lookback (days)",yf:v=>v.toFixed(1)});
+  const row=(k,f)=>`<tr><td>${k}</td><td>${f(best.tr)}</td><td>${f(best.te)}</td><td>${f(bh)}</td></tr>`;
+  $("l4-tbl").innerHTML=[row("CAGR",m=>pct(m.cagr)),row("Annual volatility",m=>pct(m.vol)),row("Sharpe ratio",m=>f2(m.sh)),row("Max drawdown",m=>"−"+pct(m.mdd)),row("Profit factor (per trade)",m=>m.pf===Infinity?"no losses":f2(m.pf)),row("Trades",m=>m.trades),row("Time in market",m=>pct(m.exp,0))].join("");
+  const st=$("l4-stress");st.textContent="";
+  if(DATA.d&&!DATA.synthetic){const A=Date.UTC(2020,1,19),Z=Date.UTC(2020,2,23);let i0=-1,i1=-1;for(let t=a;t<n;t++){if(i0<0&&DATA.d[t]>=A)i0=t;if(DATA.d[t]<=Z)i1=t;}
+    if(i0>0&&i1>i0){let es=1,eb=1;for(let t=i0;t<=i1;t++){es*=1+best.bt.sr[t];eb*=1+best.bt.ret[t];}st.innerHTML=`<b style="color:var(--ink)">Stress test, COVID crash (19 Feb to 23 Mar 2020):</b> strategy ${pct(es-1)}, buy and hold ${pct(eb-1)}.`;}
+    else st.textContent="Stress test: load data covering Feb–Mar 2020 to see how the strategy behaved in the COVID crash.";}
+  const info=$("l4-info");info.className="datainfo";info.textContent=DATA.label+` Training: ${split-a} days, test: ${n-split} days. Lookbacks tried: ${grid.join(", ")}.`;
+}
+$("l4file").addEventListener("change",ev=>{const f=ev.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{DATA=loadCSV(String(rd.result),f.name);lab4();}catch(err){const info=$("l4-info");info.className="datainfo err";info.textContent=err.message+" The previous series is still shown.";}};rd.readAsText(f);});
+
+["l1n","l1y"].forEach(id=>$(id).addEventListener("input",lab1));
+$("l1r").addEventListener("click",()=>{seed1=(seed1*1103515245+12345)>>>0;lab1();});
+["l2s","l2t","l2c"].forEach(id=>$(id).addEventListener("input",lab2));
+["l3s","l3d"].forEach(id=>$(id).addEventListener("input",lab3));
+$("l3r").addEventListener("click",()=>{seed3=(seed3*1103515245+12345)>>>0;lab3();});
+["l4k","l4f","l4c"].forEach(id=>$(id).addEventListener("input",lab4));
+function all(){lab1();lab2();lab3();lab4();}
+let rt;window.addEventListener("resize",()=>{clearTimeout(rt);rt=setTimeout(all,150);});
+all();
+})();
+</script>
+</body>
+</html>
